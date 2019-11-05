@@ -1,0 +1,38 @@
+#!/bin/bash
+#
+# Find a real(er) grep(1)
+GREP=$(which -a grep | /bin/grep -v "^$_$" | head -n 1)
+
+# Poor man's isatty. If stdout is a tty, we're done
+if stty speed < /dev/stdout > /dev/null 2>&1
+then
+	exec $GREP "$@"
+fi
+
+# This is where it gets interesting. Get the pipe name.
+pipe="$(readlink /proc/$$/fd/1)"
+
+# In all but extraordinary cases, both ends of a pipe will have the same parent. Iterate over siblings.
+for pid in $(pgrep -P $PPID)
+do
+	# Only siblings, not ourselves
+	if [ "$pid" != "$$" ]
+	then
+		# If the other process' stdin is the same pipe as our stdout, we have a winner
+		if [ "$(readlink /proc/$pid/fd/0)" == "${pipe}" ]
+		then
+			# However, we only want to do this magic if the other end is less, $GREP or ourselves.
+			cmd="$(tr '\0' ' ' < /proc/$pid/cmdline 2> /dev/null || true)"
+			if [ "${cmd#less}" != "${cmd}" -o "${cmd#/bin/bash $0}" != "${cmd}" -o "${cmd#${GREP}}" != "${cmd}" ]
+			then
+				# If we're aliased to pass --color=auto, remove it, becaue it undoes what we're trying to do here
+				if [ "$1" == "--color=auto" ]
+				then
+					shift
+				fi
+				exec "${GREP}" --color=always "$@"
+			fi
+		fi
+	fi
+done
+exec "${GREP}" "$@"

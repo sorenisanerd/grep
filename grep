@@ -3,8 +3,14 @@
 # Find a real(er) grep(1)
 GREP=$(which -a grep | /bin/grep -v "^$_$" | head -n 1)
 
+if [ "$GREP_LOOP" = "yes" ]
+then
+	exec "${GREP}" "$@"
+fi
+export GREP_LOOP=yes
+
 # Poor man's isatty. If stdout is a tty, we're done
-if stty speed < /dev/stdout > /dev/null 2>&1
+if stty speed < /dev/stdout > /dev/null 2>1
 then
 	exec $GREP "$@"
 fi

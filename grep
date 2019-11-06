@@ -1,7 +1,7 @@
 #!/bin/bash
 #
 # Find a real(er) grep(1)
-GREP=$(which -a grep | /bin/grep -v "^$_$" | head -n 1)
+GREP=/bin/grep
 
 if [ "$GREP_LOOP" = "yes" ]
 then

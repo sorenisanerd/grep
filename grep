@@ -10,7 +10,7 @@ fi
 export GREP_LOOP=yes
 
 # Poor man's isatty. If stdout is a tty, we're done
-if stty speed < /dev/stdout > /dev/null 2>1
+if stty speed < /dev/stdout > /dev/null 2>&1
 then
 	exec $GREP "$@"
 fi
